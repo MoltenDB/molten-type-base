@@ -1,0 +1,30 @@
+{
+  "name": "molten-type-base",
+  "version": "0.1.0",
+  "description": "Basic types for MoltenDB",
+  "main": "index.js",
+  "scripts": {
+    "test": "jasmine",
+    "lint": "tslint src/**/*.ts && tsc --noEmit",
+    "dev": "tsc -w"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/MoltenDB/molten-type-base.git"
+  },
+  "author": "Jack Farley <bytesnz>",
+  "license": "GPL-3.0",
+  "bugs": {
+    "url": "https://github.com/MoltenDB/molten-type-base/issues"
+  },
+  "homepage": "https://github.com/MoltenDB/molten-type-base#readme",
+  "devDependencies": {
+    "@types/jasmine": "^2.5.45",
+    "jasmine-es6": "^0.4.0",
+    "rmdir": "^1.2.0"
+  },
+  "dependencies": {
+    "denodeify": "^1.2.1",
+    "json-crud": "^0.3.0"
+  }
+}
