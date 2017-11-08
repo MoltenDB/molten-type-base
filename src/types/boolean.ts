@@ -48,7 +48,7 @@ export const createBooleanType: MDB.Type.createType = (mdb: MOB.MoltenInternalIn
       };
     },
     fields: (name, collectionOptions, storage): Array<string> => [name],
-    instance: (name, collectionOptions, resultRow, item) => {
+    instance: (name, collectionOptions, storage, resultRow, item) => {
       const options = collectionOptions.fields[name];
 
       return {

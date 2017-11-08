@@ -60,7 +60,7 @@ export const createGroupType: MDB.Type.createType = (mdb: MDB.MoltenInternalInst
       // store objects if don't have the fields - may be dangerous
       return schema;
     },
-    instance: (name, collectionOptions, resultRow, item) => {
+    instance: (name, collectionOptions, storage, resultRow, item) => {
       const fieldOptions = getFieldOptions(name, collectionOptions);
       return {
         toString: () => {

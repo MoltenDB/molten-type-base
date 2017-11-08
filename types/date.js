@@ -205,7 +205,7 @@ exports.createDateType = function (mdb) {
             }
             var _a, _b;
         },
-        instance: function (name, collectionOptions, resultRow, item) {
+        instance: function (name, collectionOptions, storage, resultRow, item) {
             var options = collectionOptions.fields[name];
             if (options.ranged) {
                 var startDate_1 = makeDateFromValue(item[name].start, options);

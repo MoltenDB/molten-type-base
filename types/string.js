@@ -50,11 +50,12 @@ exports.createStringType = function (mdb) {
         options: exports.options,
         validate: exports.validate,
         schema: function (name, collectionOptions, storage) {
-            var schema = {};
-            schema[name] = {
-                type: 'string'
-            };
-            return schema;
+            return _a = {},
+                _a[name] = {
+                    type: 'string'
+                },
+                _a;
+            var _a;
         },
         fields: function (name, collectionOptions, storage) { return [name]; },
         store: function (name, collectionOptions, storage, value) {
@@ -65,7 +66,7 @@ exports.createStringType = function (mdb) {
             }
             var _a;
         },
-        instance: function (name, collectionOptions, resultRow, item) {
+        instance: function (name, collectionOptions, storage, resultRow, item) {
             return {
                 /**
                  * Give the value for the default or the specified language. If a

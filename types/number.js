@@ -1,4 +1,5 @@
 "use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
 exports.label = 'Number Type';
 exports.description = 'Basic number';
 exports.options = {
@@ -55,7 +56,7 @@ exports.createNumberType = function (mdb) {
             }
             var _a;
         },
-        instance: function (name, collectionOptions, resultRow, item) {
+        instance: function (name, collectionOptions, storage, resultRow, item) {
             return {
                 toString: function () {
                     return item[name].toString();
@@ -67,5 +68,4 @@ exports.createNumberType = function (mdb) {
         }
     };
 };
-Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = exports.createNumberType;

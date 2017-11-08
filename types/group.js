@@ -1,4 +1,5 @@
 "use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
 var options_1 = require("../lib/options");
 exports.label = 'Field Group';
 exports.description = 'Used to group a collection of fields together';
@@ -50,7 +51,7 @@ exports.createGroupType = function (mdb) {
             // store objects if don't have the fields - may be dangerous
             return schema;
         },
-        instance: function (name, collectionOptions, resultRow, item) {
+        instance: function (name, collectionOptions, storage, resultRow, item) {
             var fieldOptions = options_1.getFieldOptions(name, collectionOptions);
             return {
                 toString: function () {
@@ -77,5 +78,4 @@ exports.createGroupType = function (mdb) {
         }
     };
 };
-Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = exports.createGroupType;

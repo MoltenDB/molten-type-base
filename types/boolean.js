@@ -1,4 +1,5 @@
 "use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
 exports.label = 'Boolean Type';
 exports.description = 'Boolean (true/false)';
 exports.options = {
@@ -43,7 +44,7 @@ exports.createBooleanType = function (mdb) {
             var _a;
         },
         fields: function (name, collectionOptions, storage) { return [name]; },
-        instance: function (name, collectionOptions, resultRow, item) {
+        instance: function (name, collectionOptions, storage, resultRow, item) {
             var options = collectionOptions.fields[name];
             return {
                 toString: function () {
@@ -58,5 +59,4 @@ exports.createBooleanType = function (mdb) {
         }
     };
 };
-Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = exports.createBooleanType;

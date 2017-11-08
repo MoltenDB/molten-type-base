@@ -205,7 +205,7 @@ export const createDateType: MDB.Type.createType = (mdb: MDB.MoltenInternalInsta
         }
       }
     },
-    instance: (name, collectionOptions, resultRow, item) => {
+    instance: (name, collectionOptions, storage, resultRow, item) => {
       const options = collectionOptions.fields[name];
 
       if (options.ranged) {

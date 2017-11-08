@@ -57,7 +57,7 @@ export const createNumberType: MDB.Type.createType = (mdb: MDB.MoltenInternalIns
         };
       }
     },
-    instance: (name, collectionOptions, resultRow, item) => {
+    instance: (name, collectionOptions, storage, resultRow, item) => {
       return {
         toString: () => {
           return item[name].toString();

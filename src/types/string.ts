@@ -45,18 +45,18 @@ export const validate = (name, collectionOptions, value) => {
   return null;
 };
 
-export const createStringType: MDB.Type.createType = (mdb: MDB.MoltenInternalInstance) => {
+export const createStringType: MDB.createType = (mdb: MDB.MoltenInternalInstance) => {
   return {
     label,
     description,
     options,
     validate,
     schema: (name, collectionOptions, storage) => {
-      let schema = {};
-      schema[name] = {
-        type: 'string'
+      return {
+        [name]: {
+          type: 'string'
+        }
       };
-      return schema;
     },
     fields: (name, collectionOptions, storage): Array<string> => [name],
     store: (name, collectionOptions, storage, value) => {
@@ -66,7 +66,7 @@ export const createStringType: MDB.Type.createType = (mdb: MDB.MoltenInternalIns
         };
       }
     },
-    instance: (name, collectionOptions, resultRow, item) => {
+    instance: (name, collectionOptions, storage, resultRow, item) => {
       return {
         /**
          * Give the value for the default or the specified language. If a
