@@ -1,4 +1,32 @@
+/**
+ * Date/time (range) type.
+ *
+ * The stored date/times can either be dates, datetimes or times and either be
+ * a single value or a two-value range.
+ *
+ * If native date/time/datetime storage is not available:
+ * - datetime values are stored as unix timestamps (number of seconds)
+ * - date values are stored as numbers in the YYYYMMDD format
+ * - time valies are store as numbers in the HHmm[ss] format
+ */
 import { DateOnly, TimeOnly } from '../lib/date';
+
+const availableResolutionLabels = {
+  second: 'LSD of seconds',
+  seconds: 'Number of seconds',
+  minute: 'LSD of minutes',
+  minutes: 'Number of minutes',
+  hours: 'Number of hours',
+  weekdays: 'Number of weekdays',
+  months: 'Number of months'
+};
+
+const availableResolutions = [
+  'second', 'seconds',
+  'minute', 'minutes',
+  'hours',
+  'weekdays', 'months'
+];
 
 export const label = 'Date Type';
 export const description = 'Date/time, either singular or ranged';
@@ -34,6 +62,13 @@ export const options = {
   maximum: {
     label: 'Maximum date/time',
     type: 'date'
+  },
+  resolutions: {
+    label: 'Resolutions to store',
+    description: 'Resolutions can be used to retrieve particular values from the collection',
+    type: 'string', // TODO lookup? list?
+    multiple: true,
+    values: availableResolutionLabels
   }
 };
 
@@ -106,7 +141,7 @@ export const validate = (name, collectionOptions, value) => {
  */
 const makeDateFromValue = (value, options: MDB.Field) => {
   if (value === null || typeof value === 'undefined') {
-    return value;
+    return null;
   }
 
   switch(options.format) {
@@ -168,22 +203,34 @@ export const createDateType: MDB.Type.createType = (mdb: MDB.MoltenInternalInsta
           }
       }
 
+      let schema;
+
       if (options.ranged) {
-        return {
-          [`${name}.start`]: {
+        schema = {
+          [`${name}_start`]: {
             type: fieldType
           },
-          [`${name}.end`]: {
+          [`${name}_end`]: {
             type: fieldType
           }
         };
       } else {
-        return {
+        schema = {
           [name]: {
             type: fieldType
           }
         };
       }
+
+      if (options.resolutions) {
+        options.resolutions.forEach((resolution) => {
+          schema[`${name}_${resolution}`] = {
+            type: 'number'
+          };
+        });
+      }
+
+      return schema;
     },
     fields: (name, collectionOptions, storage): Array<string> => [name],
     store: (name, collectionOptions, storage, value) => {
@@ -194,15 +241,102 @@ export const createDateType: MDB.Type.createType = (mdb: MDB.MoltenInternalInsta
       } else {
         value = makeDateFromValue(value, options);
 
-        if (storageHasNativeType(options, storage)) {
-          return {
-            [name]: new Date(value.toString())
-          };
+        let storeValue;
+
+        if (options.ranged) {
+          if (storageHasNativeType(options, storage)) {
+            storeValue = {
+              [`${name}_start`]: value.start.toISOString(),
+              [`${name}_stop`]: value.stop.toISOString()
+            };
+          } else {
+            storeValue = {
+              [name]: value.start instanceof Date ? Math.round(value.start.valueOf() / 1000) : value.start.valueOf(),
+              [name]: value.stop instanceof Date ? Math.round(value.stop.valueOf() / 1000) : value.stop.valueOf()
+            };
+          }
         } else {
-          return {
-            [name]: value instanceof Date ? value.valueOf() / 1000 : value.valueOf()
-          };
+          if (storageHasNativeType(options, storage)) {
+            storeValue = {
+              [name]: value.toISOString()
+            };
+          } else {
+            storeValue = {
+              [name]: value instanceof Date ? Math.round(value.valueOf() / 1000) : value.valueOf()
+            };
+          }
         }
+
+        if (options.resolutions) {
+          if (options.resolutions.indexOf('second') !== -1) {
+            storeValue[`${name}_second`] = value.getSeconds() % 10;
+          }
+          if (options.resolutions.indexOf('seconds') !== -1) {
+            storeValue[`${name}_seconds`] = value.getSeconds();
+          }
+          if (options.resolutions.indexOf('minute') !== -1) {
+            storeValue[`${name}_minute`] = value.getMinutes() % 10;
+          }
+          if (options.resolutions.indexOf('minutes') !== -1) {
+            storeValue[`${name}_minutes`] = value.getMinutes();
+          }
+          if (options.resolutions.indexOf('hours') !== -1) {
+            storeValue[`${name}_hours`] = value.getHours();
+          }
+          if (options.resolutions.indexOf('weekdays') !== -1) {
+            storeValue[`${name}_weekdays`] = value.getDay();
+          }
+          if (options.resolutions.indexOf('months') !== -1) {
+            storeValue[`${name}_months`] = value.getMonth() + 1;
+          }
+        }
+
+        return storeValue;
+      }
+    },
+    filter: (name, collectionOptions, storage, filter, filterOptions) => {
+      const options = collectionOptions.fields[name];
+      console.log('field options', name, options);
+
+      switch (filter) {
+        case 'resolutions':
+          console.log('got a resolutions filter', filterOptions);
+          if (options.resolutions) { //TODO Type checking
+            const selectedResolutions = Object.keys(filterOptions);
+
+            if (selectedResolutions.length > 1) {
+              return { $and: selectedResolutions.map((resolution) => {
+                if (filterOptions[resolution] instanceof Array) {
+                  return { [`${name}_${resolution}`]: { $in: filterOptions[resolution] } };
+                } else {
+                  return { [`${name}_${resolution}`]: filterOptions[resolution] };
+                }
+              }) };
+            } else if (selectedResolutions.length) {
+              const resolution = selectedResolutions[0];
+              if (filterOptions[resolution] instanceof Array) {
+                return { [`${name}_${resolution}`]: { $in: filterOptions[resolution] } };
+              } else {
+                return { [`${name}_${resolution}`]: filterOptions[resolution] };
+              }
+            }
+          }
+          return;
+        case 'between':
+          return { [name]: {
+            $gte: makeDateFromValue(filterOptions[0], collectionOptions),
+            $lt: makeDateFromValue(filterOptions[1], collectionOptions)
+          } };
+        case '$lt':
+        case '$lte':
+        case '$gt':
+        case '$gte':
+        case '$eq':
+        case '$ne':
+          // Check validitity of date
+          return { [name]: {
+            filter: makeDateFromValue(filterOptions, collectionOptions)
+          } };
       }
     },
     instance: (name, collectionOptions, storage, resultRow, item) => {
@@ -224,9 +358,9 @@ export const createDateType: MDB.Type.createType = (mdb: MDB.MoltenInternalInsta
               return `from ${startDate} until ${endDate}`;
             }
           },
-          valueOf: () => ({
-            start: makeDateFromValue(startDate, options),
-            end: makeDateFromValue(endDate, options)
+          valueOf: (forJson) => ({
+            start: date === null ? null : forJson ? startDate.valueOf() : makeDateFromValue(startDate, options),
+            end: date === null ? null : forJson ? endDate.valueOf() : makeDateFromValue(endDate, options)
           })
         };
       } else {
@@ -235,7 +369,7 @@ export const createDateType: MDB.Type.createType = (mdb: MDB.MoltenInternalInsta
 
         return {
           toString: () => (date === null ? '' : date.toString()),
-          valueOf: () => date
+          valueOf: (forJson) => date === null ? null : forJson ? date.valueOf() : makeDateFromValue(date, options)
         }
       }
     }

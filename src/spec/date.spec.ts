@@ -2,9 +2,11 @@ import createTypeTests from 'molten-type';
 import createDateType from '../types/date';
 import { DateOnly, TimeOnly } from '../lib/date';
 
-const testDate = new Date();
+import * as MDBType from 'molten-type';
 
-const testDateOptions: MDB.Type.testTestOptions = {
+const testDate = new Date('2008-07-06T05:43Z');
+
+const testDateOptions: MDBType.TypeTestOptions = {
   goodOptions: [
     {
       label: 'standard datetime with datetime storage',
@@ -25,14 +27,17 @@ const testDateOptions: MDB.Type.testTestOptions = {
         {
           label: 'valid date',
           value: testDate,
-          storedValue: testDate,
+          storedValue: {
+            testField: testDate
+          },
+          storedValue: testDate.toISOString(),
           stringValue: testDate.toString()
         }
       ],
       invalidValues: [
         {
           label: 'number',
-          value: testDate.getTime() / 1000
+          value: Math.round(testDate.getTime() / 1000)
         },
         {
           label: 'string',
@@ -59,7 +64,7 @@ const testDateOptions: MDB.Type.testTestOptions = {
         {
           label: 'valid date',
           value: testDate,
-          storedValue: testDate.valueOf(),
+          storedValue: Math.round(testDate.valueOf() / 1000),
           stringValue: testDate.toString()
         }
       ]
@@ -67,8 +72,8 @@ const testDateOptions: MDB.Type.testTestOptions = {
     {
       label: 'standard date with date storage',
       storage: {
-        types: [],
-        features: ['date']
+        types: ['date'],
+        features: []
       },
       collection: {
         name: 'test',
@@ -83,8 +88,9 @@ const testDateOptions: MDB.Type.testTestOptions = {
       validValues: [
         {
           label: 'valid date',
-          value: testDate,
-          storedValue: testDate,
+          value: new DateOnly(testDate),
+          enteredValue: testDate,
+          storedValue: (new DateOnly(testDate)).toString(),
           stringValue: (new DateOnly(testDate)).toString()
         }
       ]
@@ -108,7 +114,8 @@ const testDateOptions: MDB.Type.testTestOptions = {
       validValues: [
         {
           label: 'valid date',
-          value: testDate,
+          value: new DateOnly(testDate),
+          enteredValue: testDate,
           storedValue: (new DateOnly(testDate)).valueOf(),
           stringValue: (new DateOnly(testDate)).toString()
         }
@@ -132,9 +139,10 @@ const testDateOptions: MDB.Type.testTestOptions = {
       fieldName: 'testField',
       validValues: [
         {
-          label: 'valid date',
-          value: testDate,
-          storedValue: testDate,
+          label: 'valid time',
+          value: new TimeOnly(testDate),
+          enteredValue: testDate,
+          storedValue: (new TimeOnly(testDate)).toString(),
           stringValue: (new TimeOnly(testDate)).toString()
         }
       ]
@@ -158,9 +166,71 @@ const testDateOptions: MDB.Type.testTestOptions = {
       validValues: [
         {
           label: 'valid time',
-          value: testDate,
+          value: new TimeOnly(testDate),
+          enteredValue: testDate,
           storedValue: (new TimeOnly(testDate)).valueOf(),
           stringValue: (new TimeOnly(testDate)).toString()
+        }
+      ]
+    },
+    {
+      label: 'datetime with resolutions and without datetime storage',
+      storage: {
+        types: [],
+        features: []
+      },
+      collection: {
+        name: 'test',
+        fields: {
+          testField: {
+            type: 'date',
+            resolutions: [ 'second', 'seconds', 'minute', 'minutes',
+                'hours', 'weekdays', 'months' ]
+          }
+        }
+      },
+      fieldName: 'testField',
+      schema: {
+        testField: {
+          type: 'number',
+        },
+        testField_second: {
+          type: 'number',
+        },
+        testField_seconds: {
+          type: 'number',
+        },
+        testField_minute: {
+          type: 'number',
+        },
+        testField_minutes: {
+          type: 'number',
+        },
+        testField_hours: {
+          type: 'number',
+        },
+        testField_weekdays: {
+          type: 'number',
+        },
+        testField_months: {
+          type: 'number',
+        },
+      },
+      validValues: [
+        {
+          label: 'valid date',
+          value: testDate,
+          storedValue: {
+            testField: Math.round(testDate.valueOf() / 1000),
+            testField_second: testDate.getSeconds() % 10,
+            testField_seconds: testDate.getSeconds(),
+            testField_minute: testDate.getMinutes() % 10,
+            testField_minutes: testDate.getMinutes(),
+            testField_hours: testDate.getHours(),
+            testField_weekdays: testDate.getDay(),
+            testField_months: testDate.getMonth() + 1,
+          },
+          stringValue: testDate.toString()
         }
       ]
     },

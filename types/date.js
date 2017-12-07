@@ -1,6 +1,32 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
+/**
+ * Date/time (range) type.
+ *
+ * The stored date/times can either be dates, datetimes or times and either be
+ * a single value or a two-value range.
+ *
+ * If native date/time/datetime storage is not available:
+ * - datetime values are stored as unix timestamps (number of seconds)
+ * - date values are stored as numbers in the YYYYMMDD format
+ * - time valies are store as numbers in the HHmm[ss] format
+ */
 var date_1 = require("../lib/date");
+var availableResolutionLabels = {
+    second: 'LSD of seconds',
+    seconds: 'Number of seconds',
+    minute: 'LSD of minutes',
+    minutes: 'Number of minutes',
+    hours: 'Number of hours',
+    weekdays: 'Number of weekdays',
+    months: 'Number of months'
+};
+var availableResolutions = [
+    'second', 'seconds',
+    'minute', 'minutes',
+    'hours',
+    'weekdays', 'months'
+];
 exports.label = 'Date Type';
 exports.description = 'Date/time, either singular or ranged';
 exports.options = {
@@ -35,6 +61,13 @@ exports.options = {
     maximum: {
         label: 'Maximum date/time',
         type: 'date'
+    },
+    resolutions: {
+        label: 'Resolutions to store',
+        description: 'Resolutions can be used to retrieve particular values from the collection',
+        type: 'string',
+        multiple: true,
+        values: availableResolutionLabels
     }
 };
 exports.validate = function (name, collectionOptions, value) {
@@ -105,7 +138,7 @@ exports.validate = function (name, collectionOptions, value) {
  */
 var makeDateFromValue = function (value, options) {
     if (value === null || typeof value === 'undefined') {
-        return value;
+        return null;
     }
     switch (options.format) {
         case 'date':
@@ -165,23 +198,32 @@ exports.createDateType = function (mdb) {
                         fieldType = 'number';
                     }
             }
+            var schema;
             if (options.ranged) {
-                return _a = {},
-                    _a[name + ".start"] = {
+                schema = (_a = {},
+                    _a[name + "_start"] = {
                         type: fieldType
                     },
-                    _a[name + ".end"] = {
+                    _a[name + "_end"] = {
                         type: fieldType
                     },
-                    _a;
+                    _a);
             }
             else {
-                return _b = {},
+                schema = (_b = {},
                     _b[name] = {
                         type: fieldType
                     },
-                    _b;
+                    _b);
             }
+            if (options.resolutions) {
+                options.resolutions.forEach(function (resolution) {
+                    schema[name + "_" + resolution] = {
+                        type: 'number'
+                    };
+                });
+            }
+            return schema;
             var _a, _b;
         },
         fields: function (name, collectionOptions, storage) { return [name]; },
@@ -192,18 +234,107 @@ exports.createDateType = function (mdb) {
             }
             else {
                 value = makeDateFromValue(value, options);
-                if (storageHasNativeType(options, storage)) {
-                    return _a = {},
-                        _a[name] = new Date(value.toString()),
-                        _a;
+                var storeValue = void 0;
+                if (options.ranged) {
+                    if (storageHasNativeType(options, storage)) {
+                        storeValue = (_a = {},
+                            _a[name + "_start"] = value.start.toISOString(),
+                            _a[name + "_stop"] = value.stop.toISOString(),
+                            _a);
+                    }
+                    else {
+                        storeValue = (_b = {},
+                            _b[name] = value.start instanceof Date ? Math.round(value.start.valueOf() / 1000) : value.start.valueOf(),
+                            _b[name] = value.stop instanceof Date ? Math.round(value.stop.valueOf() / 1000) : value.stop.valueOf(),
+                            _b);
+                    }
                 }
                 else {
-                    return _b = {},
-                        _b[name] = value instanceof Date ? value.valueOf() / 1000 : value.valueOf(),
-                        _b;
+                    if (storageHasNativeType(options, storage)) {
+                        storeValue = (_c = {},
+                            _c[name] = value.toISOString(),
+                            _c);
+                    }
+                    else {
+                        storeValue = (_d = {},
+                            _d[name] = value instanceof Date ? Math.round(value.valueOf() / 1000) : value.valueOf(),
+                            _d);
+                    }
                 }
+                if (options.resolutions) {
+                    if (options.resolutions.indexOf('second') !== -1) {
+                        storeValue[name + "_second"] = value.getSeconds() % 10;
+                    }
+                    if (options.resolutions.indexOf('seconds') !== -1) {
+                        storeValue[name + "_seconds"] = value.getSeconds();
+                    }
+                    if (options.resolutions.indexOf('minute') !== -1) {
+                        storeValue[name + "_minute"] = value.getMinutes() % 10;
+                    }
+                    if (options.resolutions.indexOf('minutes') !== -1) {
+                        storeValue[name + "_minutes"] = value.getMinutes();
+                    }
+                    if (options.resolutions.indexOf('hours') !== -1) {
+                        storeValue[name + "_hours"] = value.getHours();
+                    }
+                    if (options.resolutions.indexOf('weekdays') !== -1) {
+                        storeValue[name + "_weekdays"] = value.getDay();
+                    }
+                    if (options.resolutions.indexOf('months') !== -1) {
+                        storeValue[name + "_months"] = value.getMonth() + 1;
+                    }
+                }
+                return storeValue;
             }
-            var _a, _b;
+            var _a, _b, _c, _d;
+        },
+        filter: function (name, collectionOptions, storage, filter, filterOptions) {
+            var options = collectionOptions.fields[name];
+            console.log('field options', name, options);
+            switch (filter) {
+                case 'resolutions':
+                    console.log('got a resolutions filter', filterOptions);
+                    if (options.resolutions) {
+                        var selectedResolutions = Object.keys(filterOptions);
+                        if (selectedResolutions.length > 1) {
+                            return { $and: selectedResolutions.map(function (resolution) {
+                                    if (filterOptions[resolution] instanceof Array) {
+                                        return _a = {}, _a[name + "_" + resolution] = { $in: filterOptions[resolution] }, _a;
+                                    }
+                                    else {
+                                        return _b = {}, _b[name + "_" + resolution] = filterOptions[resolution], _b;
+                                    }
+                                    var _a, _b;
+                                }) };
+                        }
+                        else if (selectedResolutions.length) {
+                            var resolution = selectedResolutions[0];
+                            if (filterOptions[resolution] instanceof Array) {
+                                return _a = {}, _a[name + "_" + resolution] = { $in: filterOptions[resolution] }, _a;
+                            }
+                            else {
+                                return _b = {}, _b[name + "_" + resolution] = filterOptions[resolution], _b;
+                            }
+                        }
+                    }
+                    return;
+                case 'between':
+                    return _c = {}, _c[name] = {
+                        $gte: makeDateFromValue(filterOptions[0], collectionOptions),
+                        $lt: makeDateFromValue(filterOptions[1], collectionOptions)
+                    }, _c;
+                case '$lt':
+                case '$lte':
+                case '$gt':
+                case '$gte':
+                case '$eq':
+                case '$ne':
+                    // Check validitity of date
+                    return _d = {}, _d[name] = {
+                        filter: makeDateFromValue(filterOptions, collectionOptions)
+                    }, _d;
+            }
+            var _a, _b, _c, _d;
         },
         instance: function (name, collectionOptions, storage, resultRow, item) {
             var options = collectionOptions.fields[name];
@@ -225,9 +356,9 @@ exports.createDateType = function (mdb) {
                             return "from " + startDate_1 + " until " + endDate_1;
                         }
                     },
-                    valueOf: function () { return ({
-                        start: makeDateFromValue(startDate_1, options),
-                        end: makeDateFromValue(endDate_1, options)
+                    valueOf: function (forJson) { return ({
+                        start: date === null ? null : forJson ? startDate_1.valueOf() : makeDateFromValue(startDate_1, options),
+                        end: date === null ? null : forJson ? endDate_1.valueOf() : makeDateFromValue(endDate_1, options)
                     }); }
                 };
             }
@@ -236,7 +367,7 @@ exports.createDateType = function (mdb) {
                 var date_2 = makeDateFromValue(item[name], options);
                 return {
                     toString: function () { return (date_2 === null ? '' : date_2.toString()); },
-                    valueOf: function () { return date_2; }
+                    valueOf: function (forJson) { return date_2 === null ? null : forJson ? date_2.valueOf() : makeDateFromValue(date_2, options); }
                 };
             }
         }

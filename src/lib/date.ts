@@ -8,7 +8,7 @@ export function DateOnly(date?: number | string | Date | DateOnly) {
   } else if (typeof date === 'number') {
     let dateObject = new Date();
     dateObject.setFullYear(Math.round(date / 10000));
-    dateObject.setMonth(Math.round((date % 10000) / 100));
+    dateObject.setMonth(Math.round((date % 10000) / 100) - 1);
     dateObject.setDate(date % 100);
     date = dateObject;
   } else {
@@ -86,6 +86,12 @@ export function TimeOnly(time?: number | string | Date | TimeOnly, precision?: n
     time = date;
   } else if (time instanceof TimeOnly) {
     time = new Date(time.toString());
+  } else if (typeof time === 'string' && time.match(/\d?\d:\d\d/)) {
+    const parts = time.split(':');
+    time = new Date();
+
+    time.setHours(parseInt(parts[0]));
+    time.setMinutes(parseInt(parts[1]));
   } else {
     time = new Date(time);
   }
