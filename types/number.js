@@ -59,9 +59,15 @@ exports.createNumberType = function (mdb) {
         instance: function (name, collectionOptions, storage, resultRow, item) {
             return {
                 toString: function () {
+                    if (item[name] === null || typeof item[name] === 'undefined') {
+                        return '';
+                    }
                     return item[name].toString();
                 },
                 valueOf: function () {
+                    if (item[name] === null || typeof item[name] === 'undefined') {
+                        return null;
+                    }
                     return item[name];
                 }
             };

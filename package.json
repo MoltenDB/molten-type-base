@@ -19,8 +19,10 @@
   },
   "homepage": "https://github.com/MoltenDB/molten-type-base#readme",
   "devDependencies": {
+    "@moltendb/molten-type": "https://github.com/MoltenDB/molten-type.git",
     "@types/jasmine": "^2.5.45",
     "jasmine-es6": "^0.4.0",
+    "molten-core": "https://github.com/MoltenDB/molten-core.git",
     "rmdir": "^1.2.0"
   },
   "dependencies": {

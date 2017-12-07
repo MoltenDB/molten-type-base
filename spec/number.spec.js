@@ -1,4 +1,5 @@
 "use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
 var molten_type_1 = require("molten-type");
 var number_1 = require("../types/number");
 var testNumberOptions = {

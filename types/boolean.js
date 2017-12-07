@@ -48,11 +48,17 @@ exports.createBooleanType = function (mdb) {
             var options = collectionOptions.fields[name];
             return {
                 toString: function () {
+                    if (item[name] === null || typeof item[name] === 'undefined') {
+                        return '';
+                    }
                     return item[name]
                         ? (options.trueString || 'true')
                         : (options.falseString || 'false');
                 },
                 valueOf: function () {
+                    if (item[name] === null || typeof item[name] === 'undefined') {
+                        return null;
+                    }
                     return item[name];
                 }
             };

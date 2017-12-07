@@ -1,6 +1,5 @@
 "use strict";
-var molten_type_1 = require("molten-type");
-var group_1 = require("../types/group");
+Object.defineProperty(exports, "__esModule", { value: true });
 var testGroupOptions = {
     goodOptions: [
         {
@@ -35,4 +34,4 @@ var testGroupOptions = {
         }
     ]
 };
-molten_type_1.default('Group', group_1.default, testGroupOptions);
+//TODO createTypeTests('Group', createGroupType, testGroupOptions);

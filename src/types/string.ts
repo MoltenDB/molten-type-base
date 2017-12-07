@@ -76,6 +76,9 @@ export const createStringType: MDB.createType = (mdb: MDB.MoltenInternalInstance
          * @param language Language to return the string value in
          */
         toString: (language?: string) => {
+          if (item[name] === null || typeof item[name] === 'undefined') {
+            return '';
+          }
           return item[name];
         },
         /**
@@ -84,6 +87,9 @@ export const createStringType: MDB.createType = (mdb: MDB.MoltenInternalInstance
          * the different stored languages
          */
         valueOf: (): MDB.LangString => {
+          if (item[name] === null || typeof item[name] === 'undefined') {
+            return null;
+          }
           return item[name];
         }
       };

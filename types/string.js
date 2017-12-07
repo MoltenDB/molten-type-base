@@ -76,6 +76,9 @@ exports.createStringType = function (mdb) {
                  * @param language Language to return the string value in
                  */
                 toString: function (language) {
+                    if (item[name] === null || typeof item[name] === 'undefined') {
+                        return '';
+                    }
                     return item[name];
                 },
                 /**
@@ -84,6 +87,9 @@ exports.createStringType = function (mdb) {
                  * the different stored languages
                  */
                 valueOf: function () {
+                    if (item[name] === null || typeof item[name] === 'undefined') {
+                        return null;
+                    }
                     return item[name];
                 }
             };

@@ -53,11 +53,17 @@ export const createBooleanType: MDB.Type.createType = (mdb: MOB.MoltenInternalIn
 
       return {
         toString: () => {
+          if (item[name] === null || typeof item[name] === 'undefined') {
+            return '';
+          }
           return item[name]
               ? (options.trueString ||  'true')
               : (options.falseString || 'false');
         },
         valueOf: () => {
+          if (item[name] === null || typeof item[name] === 'undefined') {
+            return null;
+          }
           return item[name];
         }
       };

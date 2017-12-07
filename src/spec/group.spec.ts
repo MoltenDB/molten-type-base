@@ -36,4 +36,4 @@ const testGroupOptions: MDB.Type.typeTestOptions = {
   ]
 };
 
-createTypeTests('Group', createGroupType, testGroupOptions);
+//TODO createTypeTests('Group', createGroupType, testGroupOptions);
